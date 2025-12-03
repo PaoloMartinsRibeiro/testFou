@@ -241,15 +241,15 @@ app.post("/api/analyze", async (req, res) => {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 👉 Le build React est à la racine du projet : ../build
-const buildPath = path.join(__dirname, "../build");
+// // 👉 Le build React est à la racine du projet : ../build
+// const buildPath = path.join(__dirname, "../build");
 
-app.use(express.static(buildPath));
+// app.use(express.static(buildPath));
 
-// Toute route non-API renvoie le React index.html
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(buildPath, "index.html"));
-});
+// // Toute route non-API renvoie le React index.html
+// app.get("/*", (req, res) => {
+//   res.sendFile(path.join(buildPath, "index.html"));
+// });
 
 // ------------------------------------------------------------------
 // 📌 LANCEMENT SERVEUR
