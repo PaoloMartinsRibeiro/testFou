@@ -247,7 +247,7 @@ const buildPath = path.join(__dirname, "../build");
 app.use(express.static(buildPath));
 
 // Toute route non-API renvoie le React index.html
-app.get("*", (req, res) => {
+app.get("/*", (req, res) => {
   res.sendFile(path.join(buildPath, "index.html"));
 });
 
