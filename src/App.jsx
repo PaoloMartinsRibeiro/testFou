@@ -14,8 +14,11 @@ const MAX = 5;
 // -------------------------------
 //     FONCTION : Appel backend
 // -------------------------------
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+
 async function callBackend(type, text, systemPrompt) {
-  const response = await fetch("http://localhost:3001/api/analyze", {
+  const response = await fetch(`${API_BASE_URL}/api/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -125,7 +128,7 @@ export default function App() {
       <h1 className="text-center text-2xl font-bold mb-6">
         Assistant Rédaction Projet
       </h1>
-      
+
 
       <div className="max-w-4xl mx-auto bg-white shadow p-6 rounded-xl">
         {/* TABS */}
