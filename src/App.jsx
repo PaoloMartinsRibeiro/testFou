@@ -14,11 +14,12 @@ const MAX = 5;
 // -------------------------------
 //     FONCTION : Appel backend
 // -------------------------------
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+const backendUrl = `${API_BASE_URL}/api/analyze`;
+
 
 async function callBackend(type, text, systemPrompt) {
-  const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+  const response = await fetch(backendUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
