@@ -7,7 +7,7 @@ const MAX_SCORE_PER_CRITERIA = 5;
 //     FONCTION : Appel backend (MODIFIÉ)
 // -------------------------------
 // Le backend gère maintenant le prompt système
-const API_BASE_URL =  "http://localhost:3001" || process.env.REACT_APP_API_BASE_URL;
+const API_BASE_URL =  process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
 const backendUrl = `${API_BASE_URL}/api/analyze`;
 
 // L'argument 'systemPrompt' a été retiré, car le backend s'en occupe
