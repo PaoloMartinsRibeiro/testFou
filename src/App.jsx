@@ -1,37 +1,31 @@
-import {
-  QQOCCQP_POINTS,
-  SYSTEM_PROMPT_QQOCCQP,
-  CIBLAGE_POINTS,
-  SYSTEM_PROMPT_CIBLAGE,
-  MAX_TOTAL_SCORE_QQOCCQP,
-  MAX_TOTAL_SCORE_CIBLAGE,
-} from "./prompt.js";
-
 import React, { useState, useEffect, useCallback } from "react";
 
-const MAX = 5;
+// Constante pour le score maximal par critère (utilisée dans l'affichage 3/5)
+const MAX_SCORE_PER_CRITERIA = 5;
 
 // -------------------------------
-//     FONCTION : Appel backend
+//     FONCTION : Appel backend (MODIFIÉ)
 // -------------------------------
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+// Le backend gère maintenant le prompt système
+const API_BASE_URL =  "http://localhost:3001" || process.env.REACT_APP_API_BASE_URL;
 const backendUrl = `${API_BASE_URL}/api/analyze`;
 
-
-async function callBackend(type, text, systemPrompt) {
-  const response = await fetch(backendUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      type,
-      user_text: text,
-      system_prompt: systemPrompt,
-    }),
-  });
+// L'argument 'systemPrompt' a été retiré, car le backend s'en occupe
+async function callBackend(type, text) {
+const response = await fetch(backendUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type,
+        user_text: text,
+        // Le champ system_prompt n'est plus envoyé
+      }),
+    });
 
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Erreur API");
 
+  // Les données retournées incluent maintenant 'points' et 'maxTotalScore'
   return data;
 }
 
@@ -56,42 +50,43 @@ export default function App() {
   const [inputQQ, setInputQQ] = useState("");
   const [inputCIB, setInputCIB] = useState("");
 
-  // Deux résultats indépendants
+  // Deux résultats indépendants, qui incluent désormais les métadonnées
   const [resultQQ, setResultQQ] = useState(null);
   const [resultCIB, setResultCIB] = useState(null);
 
-  // Loading séparé si besoin (un seul ici, c'est ok)
+  // Loading
   const [loading, setLoading] = useState(false);
 
   // Dernière valeur analysée pour éviter doublons
   const [lastAnalyzedQQ, setLastAnalyzedQQ] = useState("");
   const [lastAnalyzedCIB, setLastAnalyzedCIB] = useState("");
 
-  // Sélection dynamique selon tab
+  // Sélection dynamique de l'entrée utilisateur
   const input = tab === "QQOCCQP" ? inputQQ : inputCIB;
-  const points = tab === "QQOCCQP" ? QQOCCQP_POINTS : CIBLAGE_POINTS;
-  const system =
-    tab === "QQOCCQP" ? SYSTEM_PROMPT_QQOCCQP : SYSTEM_PROMPT_CIBLAGE;
-  const maxScore =
-    tab === "QQOCCQP"
-      ? MAX_TOTAL_SCORE_QQOCCQP
-      : MAX_TOTAL_SCORE_CIBLAGE;
+  
+  // NOUVEAU: Récupération des métadonnées (points, maxScore) du résultat
+  const result = tab === "QQOCCQP" ? resultQQ : resultCIB;
+  const points = result?.points || []; // Récupéré du backend
+  const maxTotalScore = result?.maxTotalScore || 0; // Récupéré du backend
+
 
   const analyze = useCallback(async () => {
     if (!input.trim()) return;
 
     // Gestion anti-doublons adaptée à chaque tab
-    if (
+    const isAlreadyAnalyzed =
       (tab === "QQOCCQP" && input.trim() === lastAnalyzedQQ) ||
-      (tab === "CIBLAGE" && input.trim() === lastAnalyzedCIB)
-    ) {
+      (tab === "CIBLAGE" && input.trim() === lastAnalyzedCIB);
+    
+    if (isAlreadyAnalyzed) {
       return;
     }
 
     try {
       setLoading(true);
 
-      const aiResult = await callBackend(tab, input, system);
+      // Appel API simplifié (sans le prompt)
+      const aiResult = await callBackend(tab, input);
 
       if (tab === "QQOCCQP") {
         setResultQQ(aiResult);
@@ -104,6 +99,8 @@ export default function App() {
       const errorResult = {
         scores: {},
         score_total: 0,
+        points: [], // Pour éviter les erreurs si l'API échoue
+        maxTotalScore: 0,
         reco_message: "❌ " + e.message,
       };
 
@@ -112,7 +109,8 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [input, tab, system, lastAnalyzedQQ, lastAnalyzedCIB]);
+  }, [input, tab, lastAnalyzedQQ, lastAnalyzedCIB]);
+
 
   // Auto-analyse debounce
   useEffect(() => {
@@ -121,8 +119,6 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [input, analyze]);
 
-  // Sélection du bon résultat à afficher
-  const result = tab === "QQOCCQP" ? resultQQ : resultCIB;
 
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4">
@@ -187,7 +183,7 @@ export default function App() {
         {result && (
           <div className="bg-gray-50 p-4 rounded-lg shadow mt-4">
             <h3 className="font-bold text-lg">
-              Score total : {result.score_total} / {maxScore}
+              Score total : {result.score_total} / {maxTotalScore}
             </h3>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
@@ -199,7 +195,7 @@ export default function App() {
                   <div className="mt-1 text-sm">
                     <b>{p.cle}</b> ({p.poids}%)
                     <br />
-                    Score : {result.scores[p.cle]?.score || 0} / {MAX}
+                    Score : {result.scores[p.cle]?.score || 0} / {MAX_SCORE_PER_CRITERIA}
                   </div>
                 </div>
               ))}
